@@ -1,21 +1,19 @@
 # PixselEconomy API
 
-The public API lets another Paper plugin read balances, move money, inspect currencies and listen for
-changes without touching PixselEconomy's database, configuration or internal classes.
+The PixselEconomy API allows other Paper plugins to access economy features directly, including player balances, transactions, currency information, and economy events.
 
-- API version: `1.0.0` (`PixselEconomyAPI.API_VERSION`)
-- Plugin version: `1.0.0`
-- Java package: `com.pixselplugins.zaukz.pixseleconomy.api`
-- Runtime: the API classes are bundled **inside** `PixselEconomy-1.0.0.jar`, which must be installed
-  on the server. There is no separate runtime library to install.
+It provides a straightforward way to integrate with PixselEconomy without accessing its database, configuration files, or internal implementation.
 
-## Adding the dependency
+- **API Version:** `1.0.0` (`PixselEconomyAPI.API_VERSION`)
+- **Plugin Version:** `1.0.0`
+- **Java Package:** `com.pixselplugins.zaukz.pixseleconomy.api`
+- **Runtime:** API classes are bundled inside `PixselEconomy-1.0.0.jar`, which must be installed on the server. No separate runtime library is required.
 
-The API classes are bundled inside `PixselEconomy-1.0.0.jar`, so that single JAR is all you need to
-compile against them. Download it from the plugin's Releases page and add it to your project as a
-compile-only library, because the plugin supplies the classes at runtime.
+## Adding the Dependency
 
-Gradle:
+The API is included directly in `PixselEconomy-1.0.0.jar`. Download the plugin JAR from the Releases page and add it to your project as a compile-only dependency.
+
+**Gradle:**
 
 ```groovy
 dependencies {
@@ -23,36 +21,38 @@ dependencies {
 }
 ```
 
-Other setups work too, as long as the JAR is on the compile classpath and is not bundled into your
-output:
+Other development environments can also use the JAR, provided it is available on the compile classpath and is not bundled into your plugin.
 
-- IntelliJ IDEA: File > Project Structure > Libraries > Add, pick the JAR, and set its scope to
-  Provided.
-- Eclipse: Project > Properties > Java Build Path > Libraries > Add External JARs.
+- **IntelliJ IDEA:** Go to File > Project Structure > Libraries > Add, select the JAR, and set its scope to Provided.
+- **Eclipse:** Go to Project > Properties > Java Build Path > Libraries > Add External JARs.
 
-Do **not** shade the API into your JAR and do not bundle it as a library: the plugin already provides
-those classes, and duplicating them breaks event delivery.
+**Important:** Do not shade or bundle the API into your plugin. PixselEconomy already provides these classes at runtime, and duplicating them can interfere with event delivery.
 
-## Declaring the dependency in plugin.yml
+## Declaring the Dependency
+
+Add PixselEconomy as a soft dependency in your `plugin.yml`:
 
 ```yaml
 softdepend: [PixselEconomy]
 ```
 
-Use `depend` only if your plugin genuinely cannot function without PixselEconomy.
+Use `depend` instead if your plugin cannot function without PixselEconomy.
 
-## Obtaining the service
+## Obtaining the Economy Service
+
+The main API entry point is `EconomyService`:
 
 ```java
 EconomyService economy = PixselEconomyAPI.getService();
 ```
 
-`getService()` throws `IllegalStateException` when PixselEconomy is missing or disabled. Resolve it
-lazily, inside a command, event handler or scheduled task, rather than caching it in your own
-`onEnable`, because plugin load order is not guaranteed. Use `PixselEconomyAPI.isAvailable()` or
-`PixselEconomyAPI.getServiceOrNull()` when the integration is optional.
+`getService()` throws an `IllegalStateException` if PixselEconomy is missing or disabled.
 
-Static convenience methods mirror the service for the most common operations:
+For optional integrations, use `PixselEconomyAPI.isAvailable()` or `PixselEconomyAPI.getServiceOrNull()` to check whether the API is available before accessing it.
+
+Resolve the service when it is needed, such as inside a command, event handler, or scheduled task. Avoid caching it during your own `onEnable()` method, as plugin load order is not guaranteed.
+
+The API also provides static convenience methods for common economy operations:
 
 ```java
 PixselEconomyAPI.addBalance(player, 250.0D, "coins");
@@ -64,14 +64,17 @@ PixselEconomyAPI.getBalance(player.getUniqueId(), "coins");
 
 ## Threading
 
-| Method group | Thread behaviour |
-|---|---|
-| `getCachedBalance`, `isPlayerLoaded`, `getCurrency`, `getCurrencies`, `getDefaultCurrency`, `getDefaultCurrencyId`, `format` | Instant, non-blocking, safe on any thread and in render loops |
-| `getBalance`, `hasBalance`, `getLeaderboard` | Returns a `CompletableFuture`, never blocks the caller |
-| `deposit`, `withdraw`, `setBalance`, `transfer` | Returns a `CompletableFuture`, never blocks the caller |
+API methods use different threading behaviours depending on the operation.
 
-Futures complete on PixselEconomy's database thread. Anything that touches the Bukkit API must be
-re-scheduled onto the server thread:
+| Method Group | Thread Behaviour |
+|---|---|
+| `getCachedBalance`, `isPlayerLoaded`, `getCurrency`, `getCurrencies`, `getDefaultCurrency`, `getDefaultCurrencyId`, `format` | Instant, non-blocking, and safe to call from any thread, including render loops |
+| `getBalance`, `hasBalance`, `getLeaderboard` | Returns a `CompletableFuture` without blocking the caller |
+| `deposit`, `withdraw`, `setBalance`, `transfer` | Returns a `CompletableFuture` without blocking the caller |
+
+Futures complete on PixselEconomy's database thread. Any operation that accesses the Bukkit API must be scheduled back onto the server thread.
+
+**Example:**
 
 ```java
 economy.deposit(player.getUniqueId(), "coins", 100.0D, BalanceChangeCause.PLUGIN)
@@ -82,41 +85,57 @@ economy.deposit(player.getUniqueId(), "coins", 100.0D, BalanceChangeCause.PLUGIN
         }));
 ```
 
-Never call `.join()` or `.get()` on a future from the server thread.
+Never call `.join()` or `.get()` on a future from the server thread, as this can cause server thread blocking.
 
 ## Currencies
 
-`Currency` is an immutable value object: identifier, display name, symbol, format template, decimals,
-starting balance, maximum balance, whether it is payable, and its withdrawal settings.
-`Currency#format(double)` renders an amount exactly like the plugin does, and
-`Currency#formatNumber(double, int)` renders a plain grouped number.
+The `Currency` class is an immutable value object containing the configuration and formatting information for a currency.
 
-Currency definitions live in `currencies.yml` and are managed with `/pixseleconomy createcurrency`
-and `/pixseleconomy deletecurrency`. The API intentionally cannot create currencies; that keeps
-economy structure a server-owner decision.
+Each currency provides:
 
-## Balance operations
+- Identifier and display name.
+- Currency symbol.
+- Number format template.
+- Decimal precision.
+- Starting balance.
+- Maximum balance.
+- Payment availability.
+- Withdrawal settings.
 
-All four mutating methods take a `BalanceChangeCause` so listeners can tell an API deposit from a
-command or a banknote.
+`Currency#format(double)` formats an amount using the same formatting rules as PixselEconomy.
 
-| Method | Behaviour |
+`Currency#formatNumber(double, int)` formats a plain grouped number using the specified decimal precision.
+
+Currency definitions are stored in `currencies.yml` and can be managed using `/pixseleconomy createcurrency` and `/pixseleconomy deletecurrency`.
+
+The API intentionally does not provide methods for creating currencies. Currency definitions remain under the control of the server owner.
+
+## Balance Operations
+
+The API provides four methods for modifying player balances. Each method accepts a `BalanceChangeCause`, allowing event listeners to identify where a balance change originated.
+
+| Method | Description |
 |---|---|
-| `deposit(playerId, currencyId, amount, cause)` | Adds `amount`; fails with `LIMIT_EXCEEDED` above the currency maximum |
-| `withdraw(playerId, currencyId, amount, cause)` | Removes `amount`; fails with `INSUFFICIENT_FUNDS` instead of going negative |
-| `setBalance(playerId, currencyId, amount, cause)` | Sets an exact value; zero or greater |
-| `transfer(fromId, toId, currencyId, amount, cause)` | Moves money in one database transaction; all or nothing |
+| `deposit(playerId, currencyId, amount, cause)` | Adds the specified amount to an account. Fails with `LIMIT_EXCEEDED` if the currency's maximum balance would be exceeded. |
+| `withdraw(playerId, currencyId, amount, cause)` | Removes the specified amount. Fails with `INSUFFICIENT_FUNDS` if the account does not have enough funds. |
+| `setBalance(playerId, currencyId, amount, cause)` | Sets an account to an exact balance. The value must be zero or greater. |
+| `transfer(fromId, toId, currencyId, amount, cause)` | Transfers funds between two accounts in a single database transaction. The operation is all or nothing. |
 
-Amounts are rounded to the currency's decimals before they are applied, so `0.005` with two decimals
-becomes `0.01` or `0.00` as the currency dictates. Amounts that are not finite, or that are not
-greater than zero where required, fail with `INVALID_AMOUNT` and change nothing.
+Amounts are rounded to the currency's configured decimal precision before being applied.
 
-## Results
+For example, an amount of `0.005` with two decimal places is rounded according to the currency's rounding rules.
 
-Every operation completes with a `TransactionResult`:
+Amounts that are not finite, or are not greater than zero where required, fail with `INVALID_AMOUNT` and do not modify any balances.
+
+## Transaction Results
+
+Every balance operation completes with a `TransactionResult`, which provides information about whether the operation succeeded and the resulting balances.
+
+**Example:**
 
 ```java
-TransactionResult result = /* future */;
+TransactionResult result = /* completed future result */;
+
 if (result.isSuccessful()) {
     double before = result.getPreviousBalance();
     double after = result.getNewBalance();
@@ -124,20 +143,32 @@ if (result.isSuccessful()) {
     switch (result.getStatus()) {
         case INSUFFICIENT_FUNDS -> { }
         case UNKNOWN_CURRENCY -> { }
-        case CANCELLED -> { }         // a listener vetoed the change
-        case STORAGE_ERROR -> { }     // nothing was written
+        case CANCELLED -> { }         // A listener vetoed the change
+        case STORAGE_ERROR -> { }     // Nothing was written
         default -> { }
     }
 }
 ```
 
-`TransactionStatus` values: `SUCCESS`, `INVALID_AMOUNT`, `UNKNOWN_CURRENCY`, `INSUFFICIENT_FUNDS`,
-`ACCOUNT_UNAVAILABLE`, `LIMIT_EXCEEDED`, `NOT_PAYABLE`, `CANCELLED`, `STORAGE_ERROR`.
+Available `TransactionStatus` values:
 
-A failed result carries zero balances; treat it as "nothing changed" and report the status rather
-than formatting the numbers.
+- `SUCCESS`
+- `INVALID_AMOUNT`
+- `UNKNOWN_CURRENCY`
+- `INSUFFICIENT_FUNDS`
+- `ACCOUNT_UNAVAILABLE`
+- `LIMIT_EXCEEDED`
+- `NOT_PAYABLE`
+- `CANCELLED`
+- `STORAGE_ERROR`
+
+Failed results contain zero balances. Treat these results as operations where nothing changed, and use the transaction status to determine the reason for failure rather than formatting the returned balance values.
 
 ## Leaderboards
+
+The API provides access to economy leaderboards through `getLeaderboard()`.
+
+**Example:**
 
 ```java
 economy.getLeaderboard("coins", 1, 10).thenAccept(entries -> {
@@ -148,46 +179,84 @@ economy.getLeaderboard("coins", 1, 10).thenAccept(entries -> {
 });
 ```
 
-Pages are one-based. `LeaderboardEntry` carries the account UUID, the last known player name, the
-balance and the global position, so page two starts at position `11` for a page size of `10`.
+Leaderboard pages are one-based.
+
+Each `LeaderboardEntry` contains:
+
+- Account UUID.
+- Last known player name.
+- Account balance.
+- Global leaderboard position.
+
+For example, requesting page two with a page size of ten starts at position `11`.
 
 ## Events
 
-Both events are normal Bukkit events; register them like any other listener.
+PixselEconomy provides Bukkit events that allow other plugins to monitor economy changes.
+
+Both events can be registered using standard Bukkit event listeners.
 
 ### `PixselBalanceChangeEvent`
 
-Fired **before** a change is written, for commands, API calls and banknotes alike.
+Fired **before** a balance change is written to storage. This applies to changes made through commands, API operations, and banknotes.
 
-- Cancellable: yes, cancelling aborts the operation, which then completes with
-  `TransactionStatus.CANCELLED` and writes nothing.
-- Thread: the thread performing the change. API-driven changes run on the database thread, so
-  `isAsynchronous()` is usually `true`; check it instead of assuming. Handlers must be quick,
-  because storage waits for them.
-- Accessors: `getPlayerId()`, `getCurrencyId()`, `getPreviousBalance()`, `getNewBalance()`,
-  `getDifference()`, `getAmount()`, `getCause()`.
+Event details:
+
+- **Cancellable:** Yes. Cancelling the event aborts the operation. The transaction completes with `TransactionStatus.CANCELLED`, and nothing is written.
+- **Thread:** The thread performing the balance change. API-driven changes run on the database thread, so `isAsynchronous()` is usually `true`. Always check rather than assuming.
+- **Performance:** Event handlers should execute quickly because the storage operation waits for them to finish.
+
+Available accessors:
+
+- `getPlayerId()`
+- `getCurrencyId()`
+- `getPreviousBalance()`
+- `getNewBalance()`
+- `getDifference()`
+- `getAmount()`
+- `getCause()`
+
+**Example:**
 
 ```java
 @EventHandler
 public void onBalanceChange(PixselBalanceChangeEvent event) {
-    if (event.getCause() == BalanceChangeCause.DISPLAY, skip...) { }
+    // Inspect the balance change and its cause.
+    // Use event.setCancelled(true) to prevent the change when appropriate.
 }
 ```
 
 ### `PixselCurrencyChangeEvent`
 
-Fired on the server thread when a currency is created or deleted, from commands or from editing
-`currencies.yml` followed by a reload. Not cancellable. Provides `getType()` (`CREATE` or `DELETE`)
-and `getCurrency()`; on deletion the currency object is still fully readable.
+Fired on the server thread whenever a currency is created or deleted.
 
-## Versioning
+This includes changes made through administrative commands or by editing `currencies.yml` and reloading the configuration.
 
-The API follows semantic versioning independently of plugin internals: additions bump the minor
-version, and any change that would break existing integrations bumps the major version. Compare
-`EconomyService#getApiVersion()` against `PixselEconomyAPI.API_VERSION` if your plugin needs a
-specific feature, and guard newer calls behind that check.
+Event details:
 
-## Further reading
+- **Cancellable:** No.
+- **Thread:** Always runs on the server thread.
+- **Types:** `CREATE` and `DELETE`.
 
-- [API-EXAMPLES.md](API-EXAMPLES.md): complete, adaptable examples
-- [PLACEHOLDERS.md](PLACEHOLDERS.md): placeholder reference for non-developer integration
+Available accessors:
+
+- `getType()`
+- `getCurrency()`
+
+When a currency is deleted, its `Currency` object remains fully readable through the event.
+
+## API Versioning
+
+The API follows semantic versioning independently of PixselEconomy's internal implementation.
+
+- **Minor version:** Used for backwards-compatible additions.
+- **Major version:** Used for changes that break existing integrations.
+
+Use `EconomyService#getApiVersion()` and compare it against `PixselEconomyAPI.API_VERSION` if your plugin requires a specific API feature.
+
+Check the API version before calling newer methods to ensure compatibility with the installed PixselEconomy version.
+
+## Further Documentation
+
+- [`API examples documentation`](API-EXAMPLES.md): Complete examples that can be adapted for your own plugins.
+- [`Placeholders documentation`](PLACEHOLDERS.md): Placeholder reference for integrations that do not require Java development.
