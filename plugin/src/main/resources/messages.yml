@@ -11,7 +11,7 @@ prefix: "<bold><#55D6BE>Pixsel</#55D6BE></bold> <dark_gray>»</dark_gray> "
 general:
   no-permission: "<#FF6666>You do not have permission to do that.</#FF6666>"
   player-only: "<#FF6666>That command can only be used by a player.</#FF6666>"
-  player-required: "<#FFCC66>Console must name a player: <#FFFFFF>/balance <player> [currency]</#FFFFFF></#FFCC66>"
+  player-required: "<#FFCC66>Console must name a player: <#FFFFFF>/balance <player></#FFFFFF></#FFCC66>"
   unknown-subcommand: "<#FF6666>Unknown subcommand '<#FFFFFF>{input}</#FFFFFF>'. Try <#FFFFFF>/pixseleconomy help</#FFFFFF>.</#FF6666>"
   invalid-usage: "<#FFCC66>Usage: <#FFFFFF>{usage}</#FFFFFF></#FFCC66>"
   invalid-amount: "<#FF6666>'<#FFFFFF>{input}</#FFFFFF>' is not a valid amount.</#FF6666>"
