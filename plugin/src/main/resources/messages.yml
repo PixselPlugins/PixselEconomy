@@ -1,0 +1,86 @@
+# PixselEconomy Messages
+# Published by Pixsel Plugins
+# Authored by zAukz
+#
+# Messages use MiniMessage: https://docs.advntr.dev/minimessage/format.html
+# {tokens} are replaced by the plugin. PlaceholderAPI placeholders also work here when it is
+# installed and integrations.placeholderapi is enabled.
+
+prefix: "<bold><#55D6BE>Pixsel</#55D6BE></bold> <dark_gray>»</dark_gray> "
+
+general:
+  no-permission: "<#FF6666>You do not have permission to do that.</#FF6666>"
+  player-only: "<#FF6666>That command can only be used by a player.</#FF6666>"
+  player-required: "<#FFCC66>Console must name a player: <#FFFFFF>/balance <player> [currency]</#FFFFFF></#FFCC66>"
+  unknown-subcommand: "<#FF6666>Unknown subcommand '<#FFFFFF>{input}</#FFFFFF>'. Try <#FFFFFF>/pixseleconomy help</#FFFFFF>.</#FF6666>"
+  invalid-usage: "<#FFCC66>Usage: <#FFFFFF>{usage}</#FFFFFF></#FFCC66>"
+  invalid-amount: "<#FF6666>'<#FFFFFF>{input}</#FFFFFF>' is not a valid amount.</#FF6666>"
+  unknown-currency: "<#FF6666>No currency named '<#FFFFFF>{currency}</#FFFFFF>' exists.</#FF6666>"
+  unknown-player: "<#FF6666>'<#FFFFFF>{player}</#FFFFFF>' is not online and has not played here before.</#FF6666>"
+  unknown-player-or-currency: "<#FF6666>'<#FFFFFF>{input}</#FFFFFF>' is neither an online player nor a currency.</#FF6666>"
+  insufficient-funds: "<#FF6666>That account does not have enough <#FFFFFF>{currency}</#FFFFFF>.</#FF6666>"
+  account-unavailable: "<#FF6666>That account could not be loaded right now.</#FF6666>"
+  limit-exceeded: "<#FF6666>That change would exceed the maximum balance for <#FFFFFF>{currency}</#FFFFFF>.</#FF6666>"
+  currency-not-payable: "<#FF6666><#FFFFFF>{currency}</#FFFFFF> cannot be paid to other players.</#FF6666>"
+  cancelled: "<#FFCC66>The change was cancelled by another plugin.</#FFCC66>"
+  storage-error: "<#FF6666>The database could not be reached. Nothing was changed.</#FF6666>"
+  feature-disabled: "<#FFCC66>That feature is disabled on this server.</#FFCC66>"
+  invalid-page: "<#FF6666>'<#FFFFFF>{input}</#FFFFFF>' is not a valid page number.</#FF6666>"
+  reloaded: "<#55CC88>Configuration reloaded in <#FFFFFF>{time}ms</#FFFFFF>.</#55CC88>"
+
+pay:
+  self-disabled: "<#FFCC66>You cannot pay yourself.</#FFCC66>"
+  below-minimum: "<#FFCC66>The smallest payment is <#FFFFFF>{minimum}</#FFFFFF>.</#FFCC66>"
+  success-sender: "<#55CC88>You sent</#55CC88> <#FFFFFF>{amount}</#FFFFFF> <#55CC88>to</#55CC88> <#FFFFFF>{player}</#FFFFFF><#AAAAAA>. Balance: {balance}</#AAAAAA>"
+  success-receiver: "<#55CC88>You received</#55CC88> <#FFFFFF>{amount}</#FFFFFF> <#55CC88>from</#55CC88> <#FFFFFF>{player}</#FFFFFF><#AAAAAA>.</#AAAAAA>"
+
+balance:
+  self: "<#AAAAAA>You have</#AAAAAA> <#FFFFFF>{balance}</#FFFFFF><#AAAAAA>.</#AAAAAA>"
+  other: "<#AAAAAA>{player} has</#AAAAAA> <#FFFFFF>{balance}</#FFFFFF><#AAAAAA>.</#AAAAAA>"
+
+admin:
+  added: "<#55CC88>Added</#55CC88> <#FFFFFF>{amount}</#FFFFFF> <#55CC88>to</#55CC88> <#FFFFFF>{player}</#FFFFFF><#AAAAAA>. New balance: {balance}</#AAAAAA>"
+  removed: "<#55CC88>Removed</#55CC88> <#FFFFFF>{amount}</#FFFFFF> <#55CC88>from</#55CC88> <#FFFFFF>{player}</#FFFFFF><#AAAAAA>. New balance: {balance}</#AAAAAA>"
+  set: "<#55CC88>Set the balance of</#55CC88> <#FFFFFF>{player}</#FFFFFF> <#55CC88>to</#55CC88> <#FFFFFF>{balance}</#FFFFFF><#AAAAAA>.</#AAAAAA>"
+  balance-changed: "<#FFCC66>Your {currency} balance is now <#FFFFFF>{balance}</#FFFFFF>.</#FFCC66>"
+
+currency:
+  created: "<#55CC88>Created the currency</#55CC88> <#FFFFFF>{currency}</#FFFFFF> <#AAAAAA>({id}). Edit currencies.yml for its symbol, decimals and limits.</#AAAAAA>"
+  deleted: "<#55CC88>Deleted the currency</#55CC88> <#FFFFFF>{currency}</#FFFFFF> <#AAAAAA>({id}) and {rows} stored balance(s).</#AAAAAA>"
+  already-exists: "<#FF6666>A currency with the id '<#FFFFFF>{id}</#FFFFFF>' already exists.</#FF6666>"
+  invalid-id: "<#FF6666>'<#FFFFFF>{id}</#FFFFFF>' is not a valid currency id. Use lowercase letters, digits, '-' and '_' (max 32).</#FF6666>"
+  not-found: "<#FF6666>No currency named '<#FFFFFF>{currency}</#FFFFFF>' exists.</#FF6666>"
+  delete-default: "<#FF6666><#FFFFFF>{currency}</#FFFFFF> is the default currency. Change general.default-currency first.</#FF6666>"
+
+reset:
+  warning: "<#FFCC66>This would reset <#FFFFFF>{scope}</#FFFFFF>. Run the same command <#FFFFFF>{remaining}</#FFFFFF> more time(s) within {seconds}s to confirm. <#AAAAAA>({count}/{required})</#AAAAAA></#FFCC66>"
+  cancelled: "<#AAAAAA>Reset cancelled.</#AAAAAA>"
+  done: "<#55CC88>Reset {rows} stored balance(s) for</#55CC88> <#FFFFFF>{scope}</#FFFFFF><#55CC88>.</#55CC88>"
+
+withdraw:
+  disabled: "<#FFCC66>Withdrawing is disabled for that currency.</#FFCC66>"
+  below-minimum: "<#FFCC66>The smallest banknote is <#FFFFFF>{minimum}</#FFFFFF>.</#FFCC66>"
+  above-maximum: "<#FFCC66>The largest banknote is <#FFFFFF>{maximum}</#FFFFFF>.</#FFCC66>"
+  success: "<#55CC88>You withdrew</#55CC88> <#FFFFFF>{amount}</#FFFFFF> <#AAAAAA>(fee {fee}, balance {balance})</#AAAAAA><#55CC88>.</#55CC88>"
+  redeemed: "<#55CC88>Redeemed</#55CC88> <#FFFFFF>{amount}</#FFFFFF><#55CC88>. New balance: {balance}</#55CC88>"
+  inventory-full: "<#FFCC66>Your inventory is full, the banknote was dropped at your feet.</#FFCC66>"
+  invalid-item: "<#FF6666>That banknote's currency no longer exists.</#FF6666>"
+  item-name: "<bold><#55D6BE>{currency} Banknote</#55D6BE></bold>"
+  item-lore:
+    - "<#AAAAAA>Value: <#FFFFFF>{value}</#FFFFFF></#AAAAAA>"
+    - "<#AAAAAA>Currency: <#FFFFFF>{currency}</#FFFFFF></#AAAAAA>"
+    - ""
+    - "<#8BE9D0>Right-click to redeem.</#8BE9D0>"
+
+leaderboard:
+  header: "<#55D6BE><bold>{currency}</bold></#55D6BE> <dark_gray>»</dark_gray> <#AAAAAA>page {page}</#AAAAAA>"
+  entry: "<#AAAAAA>{position}.</#AAAAAA> <#FFFFFF>{player}</#FFFFFF> <dark_gray>-</dark_gray> <#55CC88>{balance}</#55CC88>"
+  empty: "<#AAAAAA>No balances recorded for {currency} yet.</#AAAAAA>"
+  footer: "{previous}<#AAAAAA>page {page}</#AAAAAA>{next}"
+  previous: "<click:run_command:'/baltop {currency} {page}'><#8BE9D0>« previous</#8BE9D0></click>   "
+  next: "   <click:run_command:'/baltop {currency} {page}'><#8BE9D0>next »</#8BE9D0></click>"
+
+help:
+  header: "<#55D6BE><bold>PixselEconomy</bold></#55D6BE> <dark_gray>»</dark_gray> <#AAAAAA>available commands</#AAAAAA>"
+  entry: "<#FFFFFF>/{usage}</#FFFFFF> <dark_gray>-</dark_gray> <#AAAAAA>{description}</#AAAAAA>"
+  footer: "<#AAAAAA>Published by Pixsel Plugins.</#AAAAAA>"
