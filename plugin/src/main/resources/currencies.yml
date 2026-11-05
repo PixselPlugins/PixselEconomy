@@ -1,0 +1,63 @@
+# PixselEconomy Currencies
+# Published by Pixsel Plugins
+# Authored by zAukz
+#
+# Every entry below is one currency. Add as many as you like, then run
+# /pixseleconomy reload. The /createcurrency and /deletecurrency commands edit this file for you.
+#
+# The default currency is chosen in config.yml under general.default-currency.
+#
+# Options per currency:
+#   display-name        Name shown in messages and placeholders.
+#   symbol              Prefix used by the format template, may be empty.
+#   format              Template with {symbol}, {amount}, {currency} and {display_name}.
+#   decimals            Fraction digits (0-8). Amounts are rounded to this precision.
+#   starting-balance    Balance a new account starts with.
+#   max-balance         Highest balance allowed, 0 means unlimited.
+#   payable             Whether /pay may send this currency.
+#   withdrawable        Whether /withdraw may create banknotes for it.
+#   withdraw.minimum    Smallest banknote.
+#   withdraw.maximum    Largest single banknote.
+#   withdraw.fee        Flat fee charged per withdrawal.
+#   withdraw.fee-percentage   Percentage fee per withdrawal.
+
+currencies:
+  coins:
+    display-name: "Coins"
+    symbol: "$"
+    format: "{symbol}{amount}"
+    decimals: 2
+    starting-balance: 100.0
+    max-balance: 1000000000
+    payable: true
+    withdrawable: true
+    withdraw:
+      minimum: 1.0
+      maximum: 100000.0
+      fee: 0.0
+      fee-percentage: 0.0
+
+  gems:
+    display-name: "Gems"
+    symbol: ""
+    format: "{amount} {display_name}"
+    decimals: 0
+    starting-balance: 0.0
+    max-balance: 1000000
+    payable: true
+    withdrawable: true
+    withdraw:
+      minimum: 1.0
+      maximum: 10000.0
+      fee: 0.0
+      fee-percentage: 1.0
+
+  tokens:
+    display-name: "Tokens"
+    symbol: ""
+    format: "{amount} {display_name}"
+    decimals: 0
+    starting-balance: 0.0
+    max-balance: 0
+    payable: false
+    withdrawable: false
