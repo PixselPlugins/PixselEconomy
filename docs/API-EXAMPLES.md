@@ -1,9 +1,12 @@
 # PixselEconomy API Examples
 
-Every example assumes `softdepend: [PixselEconomy]` and a `JavaPlugin` subclass called `MyPlugin`.
-All code is written against API `1.0.0`.
+This document provides practical examples of how to integrate PixselEconomy into your own Paper plugins using the public Java API.
 
-## 1. Reward a player for breaking a block
+All examples are written against API version `1.0.0` and assume your plugin uses `softdepend: [PixselEconomy]` with a `JavaPlugin` subclass named `MyPlugin`.
+
+## 1. Reward Players for Breaking Blocks
+
+This example rewards players with 5 coins whenever they break diamond ore.
 
 ```java
 public final class MiningRewardListener implements Listener {
@@ -32,9 +35,11 @@ public final class MiningRewardListener implements Listener {
 }
 ```
 
-`addBalance` never blocks the server thread, and the message is sent back on the server thread.
+`addBalance()` runs asynchronously and does not block the server thread. The reward message is scheduled back onto the server thread after the transaction completes.
 
-## 2. Charge a player before opening a menu
+## 2. Charge Players Before Opening a Menu
+
+You can check whether a player has enough funds before allowing them to access a shop or menu.
 
 ```java
 public void openShop(Player player) {
@@ -59,10 +64,13 @@ public void openShop(Player player) {
 }
 ```
 
-Checking first gives a nicer message; the withdrawal itself still fails safely if the balance
-changed in between, so no double spend is possible.
+Checking the balance first allows you to display a more helpful message when a player cannot afford something.
 
-## 3. Pay a reward and tell the player their new balance
+The withdrawal operation still validates the balance when it executes, so if the player's balance changes between the check and the withdrawal, the transaction will fail safely.
+
+## 3. Reward Players and Display Their New Balance
+
+This example deposits gems into a player's account and displays their updated balance.
 
 ```java
 public void reward(Player player, double amount) {
@@ -77,7 +85,11 @@ public void reward(Player player, double amount) {
 }
 ```
 
-## 4. Read a balance instantly for a menu
+The `TransactionResult` provides the player's balance before and after a successful transaction, allowing you to display updated economy information without making another balance request.
+
+## 4. Read Player Balances Instantly
+
+For menus, scoreboards, and other frequently updated displays, you can use the cached balance instead of requesting data from storage.
 
 ```java
 // Safe on the server thread, in a render loop, or from a scheduled task.
@@ -86,10 +98,13 @@ OptionalDouble balance = PixselEconomyAPI.getService()
 double coins = balance.orElse(0.0D);
 ```
 
-Use `getCachedBalance` (never blocks) for displays, and `getBalance(...)` (future) when the player
-may be offline or the value must be fresh from storage.
+`getCachedBalance()` is instant and never blocks the caller, making it suitable for frequently updated displays.
 
-## 5. Move money between two players
+Use `getBalance()` instead when the player may be offline or when you need a fresh value from storage. It returns a `CompletableFuture`.
+
+## 5. Transfer Money Between Players
+
+The API allows you to transfer funds directly between two player accounts.
 
 ```java
 PixselEconomyAPI.getService()
@@ -103,16 +118,22 @@ PixselEconomyAPI.getService()
         }));
 ```
 
-The transfer is a single database transaction, so a failure leaves both accounts untouched.
+Transfers are processed as a single database transaction. If the operation fails, neither account is modified.
 
-## 6. React to balance changes
+This makes the method suitable for player trading, shops, and other systems that need to move funds safely between accounts.
+
+## 6. Monitor Player Balance Changes
+
+You can listen for balance changes made through commands, API operations, and banknotes using `PixselBalanceChangeEvent`.
 
 ```java
 public final class BalanceWatcher implements Listener {
 
     @EventHandler
     public void onBalanceChange(PixselBalanceChangeEvent event) {
-        // Handlers may run off the server thread; re-schedule before touching Bukkit.
+        // Handlers may run off the server thread.
+        // Re-schedule before accessing Bukkit API features.
+
         if (event.getCause() == BalanceChangeCause.API) {
             return;
         }
@@ -127,7 +148,15 @@ public final class BalanceWatcher implements Listener {
 }
 ```
 
-## 7. Veto a change
+The event provides information about the player, currency, previous balance, new balance, transaction amount, and cause.
+
+**Important:** Balance change events may run asynchronously. Always schedule Bukkit API operations back onto the server thread when necessary.
+
+## 7. Prevent Balance Changes
+
+Balance change events are cancellable, allowing your plugin to prevent transactions under certain conditions.
+
+For example, you can prevent jailed players from modifying their balances.
 
 ```java
 @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -138,9 +167,11 @@ public void onBalanceChange(PixselBalanceChangeEvent event) {
 }
 ```
 
-The operation then completes with `TransactionStatus.CANCELLED` and no balance is written.
+Cancelling the event prevents the balance change from being written. The operation completes with `TransactionStatus.CANCELLED`.
 
-## 8. React to currencies being created or deleted
+## 8. Monitor Currency Creation and Deletion
+
+You can listen for currency changes using `PixselCurrencyChangeEvent`.
 
 ```java
 @EventHandler
@@ -151,7 +182,13 @@ public void onCurrencyChange(PixselCurrencyChangeEvent event) {
 }
 ```
 
-## 9. Render a leaderboard on a hologram or sign
+The event is fired when a currency is created or deleted, including changes made through administrative commands or configuration reloads.
+
+It provides the change type and the affected `Currency` object.
+
+## 9. Display Economy Leaderboards
+
+The API can retrieve leaderboard entries for use in holograms, signs, menus, or other server displays.
 
 ```java
 EconomyService economy = PixselEconomyAPI.getService();
@@ -165,10 +202,13 @@ economy.getLeaderboard("coins", 1, 5).thenAccept(entries -> {
 });
 ```
 
-For anything that refreshes every tick, prefer the `%pixseleconomy_top_<position>_name%`
-placeholders with PlaceholderAPI: they are cached and cost nothing per render.
+For displays that refresh frequently, consider using the `%pixseleconomy_top_<position>_name%` PlaceholderAPI placeholders instead.
 
-## 10. Format amounts exactly like the plugin
+Leaderboard placeholder data is cached, making it more suitable for frequently updated displays.
+
+## 10. Format Currency Amounts
+
+PixselEconomy provides built-in formatting methods so your plugin can display amounts consistently with the server's economy settings.
 
 ```java
 EconomyService economy = PixselEconomyAPI.getService();
@@ -181,7 +221,15 @@ economy.getCurrency("gems").ifPresent(currency -> {
 });
 ```
 
-## 11. Optional dependency handling
+Use `economy.format()` or `Currency#format()` when you want to follow the configured formatting for a particular currency.
+
+Use `Currency.formatNumber()` when you only need a grouped number without the currency's display formatting.
+
+## 11. Handle Optional Dependencies
+
+If PixselEconomy is an optional integration, your plugin should check whether it is available before attempting to use its API.
+
+**Example:**
 
 ```java
 @Override
@@ -201,3 +249,15 @@ private void paySomething(Player player) {
     economy.deposit(player.getUniqueId(), "coins", 10.0D, BalanceChangeCause.PLUGIN);
 }
 ```
+
+`PixselEconomyAPI.getServiceOrNull()` returns `null` when PixselEconomy is unavailable instead of throwing an exception.
+
+This is useful for plugins that support PixselEconomy integrations without requiring it to be installed.
+
+---
+
+**Published by:** Pixsel Plugins  
+**Author:** zAukz  
+**API Version:** `1.0.0`
+
+## 💙 **Thank you for integrating with PixselEconomy!** 💙
