@@ -20,7 +20,7 @@ commands:
     usage: /pay <player> <amount> [currency]
   balance:
     description: Show a balance.
-    usage: /balance [player] [currency]
+    usage: /balance [player]
     aliases: [bal]
   withdraw:
     description: Turn a balance into a redeemable banknote.
@@ -64,7 +64,7 @@ permissions:
     default: true
   pixsel.economy.balance.others:
     description: Allows checking the balance of other players.
-    default: op
+    default: true
   pixsel.economy.withdraw:
     description: Allows turning a balance into a banknote.
     default: true
