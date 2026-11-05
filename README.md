@@ -1,284 +1,167 @@
-# PixselEconomy
+# PixselEconomy v1.0.0
 
-A lightweight multi-currency economy plugin for Paper servers, with unlimited separate economies, a
-safe backup system, PlaceholderAPI support and a full developer API.
+A lightweight and extensible economy plugin for Paper, featuring customizable currencies, flexible account and transaction systems, and a developer-friendly API for third-party integrations.
 
-**Published by:** Pixsel Plugins  
-**Authored by:** zAukz  
-**Website:** https://pixselplugins.com
-
-## Documentation
-
-| Document | Contents |
-|---|---|
-| [docs/API.md](docs/API.md) | Full API reference: dependency setup, threading, results, events and versioning |
-| [docs/API-EXAMPLES.md](docs/API-EXAMPLES.md) | Copy-ready examples: rewards, shops, taxes and event hooks |
-| [docs/PLACEHOLDERS.md](docs/PLACEHOLDERS.md) | Every `%pixseleconomy_...%` placeholder, with formats and limits |
+Everything in this plugin is managed through straightforward configuration files and in-game commands, with sensible defaults that let you get started without extensive setup.
 
 ## Features
+- **Multi-Currency Economy:** Create and manage multiple currencies for your server. PixselEconomy supports any custom economy that your server requires.
+- **Flexible Currency Settings:** Configure display names, symbols, starting balances, decimal precision, balance limits, payment rules, and more, all independently for each currency.
+- **Player Transactions:** Give players built-in commands to check balances, send money, withdraw banknotes, and compete on economy leaderboards.
+- **Physical Banknotes:** Allow players to withdraw currency as redeemable items. Configure banknote values, withdrawal limits, fees, names, and item descriptions.
+- **Simple Administration:** Manage player balances, create and delete currencies, and control your economy either in-game or through config files.
+- **Customizable Messages:** Adjust messages, formatting, banknote names, and item lore (support for Paper's built-in [MiniMessage](https://docs.papermc.io/adventure/minimessage/)).
+- **PlaceholderAPI Integration:** Display balances, currency information, and leaderboard data in scoreboards, chat, holograms, and more with [PlaceholderAPI](https://wiki.placeholderapi.com/).
+- **Flexible Storage:** Uses SQLite by default, with optional MySQL and MariaDB support for servers that need remote database storage.
+- **Automatic Backups:** Protect economy data with scheduled backups, configurable intervals, and retention settings.
+- **Developer API:** Includes a public Java API for developers who want to connect their own plugins to PixselEconomy.
 
-- **Multiple economies.** Create as many currencies as you want, each with its own display name,
-  symbol, format, decimals, starting balance, maximum balance, payment rules and withdrawal settings.
-  There is no fixed "money" currency; `coins`, `gems`, `tokens` and anything else you invent are all
-  first-class.
-- **Commands and configuration are equally capable.** Everything a command does can also be done by
-  editing `currencies.yml` and running `/pixseleconomy reload`.
-- **Per-feature permissions.** Every command has its own permission, plus `pixsel.economy.admin` and
-  `pixsel.economy.*` shortcuts that grant all of them at once.
-- **Guarded destructive command.** `/resetall` must be run several times in a row, inside a short
-  window, before it wipes balances. Both values are configurable.
-- **Withdrawable banknotes.** `/withdraw` turns a balance into a paper item that can be traded and
-  redeemed. Optional flat or percentage fee, per-currency limits, and crafting protection.
-- **Paginated leaderboards.** `/leaderboard`, `/topbal` and `/baltop` with clickable arrows that
-  print the neighbouring page.
-- **Placeholders everywhere.** `%pixseleconomy_...%` placeholders work in chat, scoreboards, boss
-  bars, action bars and holograms through PlaceholderAPI, and can be disabled in the config.
-- **Safe, optional backups.** A timer writes copies of the economy tables to a separate file, while
-  the live economy keeps using the main database. Deleting a backup can never break anything.
-- **Developer API.** Another plugin can read balances, move money and listen for changes through
-  `PixselEconomyAPI`, with cancellable events and explicit async results.
-- **Lightweight.** No per-tick tasks. Balances are cached in memory, all database work runs on one
-  dedicated thread, and placeholders never query storage.
+## Requirements
+| Component | Version | Required |
+|---|---|---|
+| Paper | 26.2 or 26.3 | Yes |
+| Java | 25 | Yes |
+| PlaceholderAPI | 2.12.x | Optional |
+| MySQL / MariaDB | Any supported version | Optional |
 
-## Compatibility
-
-| Requirement | Details |
-|---|---|
-| Server | Paper (or a Paper fork) |
-| Minecraft | 26.2 and 26.3 |
-| Java | 25 (the runtime Paper 26.2/26.3 use) |
-| Optional | PlaceholderAPI 2.12.x |
-
-The plugin is compiled against the Paper **26.2** API, which is the lower of the two mandatory
-targets, so the same JAR loads on 26.2 and 26.3 without version-specific code paths. `api-version` is
-declared as `26.2`.
 
 ## Installation
-
 1. Download `PixselEconomy-1.0.0.jar`.
-2. Place it in your server's `plugins` directory.
-3. Start the server. `config.yml`, `currencies.yml` and `messages.yml` are created automatically, and
-   `database.db` is created on first start.
-4. Adjust the currency list and settings, then run `/pixseleconomy reload`.
-5. Give players access with your permissions plugin. Defaults: `/pay`, `/balance`, `/withdraw` and
-   `/leaderboard` are available to everyone; administration is operator-only.
+2. Place the JAR file in your server's `plugins` directory.
+3. Start your server.
+4. Done!
 
-Do **not** install anything else for storage. SQLite needs no setup, and the MySQL driver is bundled
-inside the plugin JAR.
+If you wish to fine-tune your plugin, feel free to edit your config files after the server has ran with the plugin.
 
-## Commands
+## Getting Started
+PixselEconomy includes a ready-to-use default configuration with three currencies: `coins`, `gems`, and `tokens`.
+New player accounts start with 100 coins. The default currency uses `$` as its symbol and supports two decimal places.
 
-Player commands are their own commands. Every administration command is a `/pixseleconomy`
-subcommand instead, and `/eco` is an alias of the main command.
+Players can immediately use the following commands:
+| Command | Description |
+|---|---|
+| `/balance` | Check your balance |
+| `/pay <player> <amount>` | Send money to another player |
+| `/withdraw <amount>` | Withdraw a banknote |
+| `/leaderboard` | View the richest players |
 
-| Command | Description | Permission |
-|---|---|---|
-| `/pay <player> <amount> [currency]` | Send money to another player | `pixsel.economy.pay` |
-| `/balance [player] [currency]` (`/bal`) | Show your balance, or another player's | `pixsel.economy.balance` |
-| `/withdraw <amount> [currency]` | Turn a balance into a banknote | `pixsel.economy.withdraw` |
-| `/leaderboard [currency] [page]` (`/topbal`, `/baltop`) | Richest accounts, clickable pages | `pixsel.economy.leaderboard` |
-
-### Administration
-
-Every administration command is a `/pixseleconomy` subcommand and occupies no top-level command
-name, so the player commands above stay short.
-
-| Command | Description | Permission |
-|---|---|---|
-| `/pixseleconomy` or `/eco` | Show the commands you may use | `pixsel.economy.use` |
-| `/pixseleconomy help` | Show the commands you may use | `pixsel.economy.use` |
-| `/pixseleconomy reload` | Reload all configuration files | `pixsel.economy.reload` |
-| `/pixseleconomy addcurrency <player> <amount> [currency]` | Add money to an account | `pixsel.economy.add` |
-| `/pixseleconomy takecurrency <player> <amount> [currency]` | Remove money from an account | `pixsel.economy.take` |
-| `/pixseleconomy setcurrency <player> <amount> [currency]` | Set an exact balance | `pixsel.economy.set` |
-| `/pixseleconomy createcurrency <id> [display name]` | Create a currency | `pixsel.economy.create` |
-| `/pixseleconomy deletecurrency <id>` | Delete a currency and all balances in it | `pixsel.economy.delete` |
-| `/pixseleconomy resetall [currency\|cancel]` | Reset balances after repeated confirmation | `pixsel.economy.resetall` |
-
-`/balance` takes the player argument optionally: `/bal` shows your own balance, `/bal Notch` another
-player's (needs `pixsel.economy.balance.others`), and `/bal Notch gems` a specific currency. A first
-argument that is not a known player is read as a currency, so `/bal gems` works as well. Amounts
-accept grouping commas (`1,500`).
-
-## Permissions
-
-| Permission | Default | Description |
-|---|---|---|
-| `pixsel.economy.*` | Operators | Every permission below |
-| `pixsel.economy.admin` | Operators | Every permission below |
-| `pixsel.economy.use` | Everyone | View the command list |
-| `pixsel.economy.pay` | Everyone | Send money |
-| `pixsel.economy.balance` | Everyone | Check your own balance |
-| `pixsel.economy.balance.others` | Operators | Check another player's balance |
-| `pixsel.economy.withdraw` | Everyone | Create banknotes |
-| `pixsel.economy.leaderboard` | Everyone | View leaderboards |
-| `pixsel.economy.add` | Operators | Add money |
-| `pixsel.economy.take` | Operators | Remove money |
-| `pixsel.economy.set` | Operators | Set a balance |
-| `pixsel.economy.create` | Operators | Create currencies |
-| `pixsel.economy.delete` | Operators | Delete currencies |
-| `pixsel.economy.resetall` | Operators | Reset balances |
-| `pixsel.economy.reload` | Operators | Reload configuration |
-
-`pixsel.economy.admin` and `pixsel.economy.*` are ordinary Bukkit parent permissions, so granting one
-node is enough, so no per-command setup is required. Features also check their permission: disabling a
-feature in the config hides nothing from the permission system, and granting a permission does not
-override a disabled feature.
+Additional currencies can be created in-game using the administrative commands or configured directly in `currencies.yml`.
 
 ## Configuration
-
+PixselEconomy keeps configuration organized across three primary files:
 | File | Purpose |
 |---|---|
-| `config.yml` | Behaviour: default currency, `/pay` rules, withdraw settings, leaderboard paging, placeholders, reset safety, storage and backups |
-| `currencies.yml` | One section per currency: name, symbol, format, decimals, starting and maximum balance, payment and withdrawal rules |
-| `messages.yml` | Every player-facing string in MiniMessage format, including banknote name and lore |
-| `database.db` | SQLite database, created automatically when `storage.type: sqlite` |
+| `config.yml` | General settings, storage, features, and backups |
+| `currencies.yml` | Currency definitions and individual currency settings |
+| `messages.yml` | Player-facing messages and banknote formatting |
 
-All three YAML files are read once on startup and can be reloaded with `/pixseleconomy reload`.
-Missing or invalid values fall back to safe defaults and are reported in the console, so a broken
-value never prevents the plugin from starting. Reloads never rewrite your files.
+Each currency can have its own settings, including:
+- Display names and symbols.
+- Decimal precision and number formatting.
+- Starting and maximum balances.
+- Payment restrictions.
+- Banknote values and withdrawal fees.
 
-Currency creation writes a complete section into `currencies.yml`, so anything you create in game is
-visible and editable in the file, so the two ways of managing currencies stay in sync.
+Configuration changes can be applied using `/pixseleconomy reload` or restarting your server.
 
-## Storage
+## Player Commands
+Player commands are allowed to all players by default. To prevent them, you will need to manually remove them in your permissions management plugin.
 
-### SQLite (default)
-
-```yaml
-storage:
-  type: sqlite
-  sqlite:
-    file: database.db
-```
-
-The file lives in `plugins/PixselEconomy/`. Write-ahead logging is enabled, and every database call
-runs on the plugin's single database thread, so the server thread never blocks on disk.
-
-### MySQL / MariaDB
-
-```yaml
-storage:
-  type: mysql
-  mysql:
-    host: localhost
-    port: 3306
-    database: pixseleconomy
-    username: username
-    password: password
-    pool-size: 4
-    properties: "useSSL=false&allowPublicKeyRetrieval=true"
-```
-
-The MySQL driver is shaded into the plugin JAR, so no extra library is needed on the server. The
-plugin keeps a small validated connection pool and creates its own table. Switching storage type
-requires a restart; the plugin warns if you reload after changing it.
-
-### Backups
-
-```yaml
-storage:
-  backup:
-    enabled: true
-    interval-minutes: 60
-    directory: backups
-    keep: 5
-```
-
-Backups are **write-only copies**: the live economy always reads and writes the main database.
-Deleting a backup file, or the whole `backups` folder, cannot break anything, because the next run creates a
-new file.
-
-- SQLite backups are complete `.db` files (`backup-20261104-234500.db`) produced inside the database
-  engine, so they are consistent and can be opened directly or swapped in during maintenance.
-- MySQL backups are portable `.sql` dumps containing the table definition and every row.
-- `keep` prunes the oldest files automatically; `0` keeps everything.
-
-## Placeholders
-
-PixselEconomy registers `%pixseleconomy_...%` placeholders with PlaceholderAPI, so they work in any
-plugin that parses placeholders: chat formats, scoreboards, boss bars, action bars, tab lists and
-holograms. Disable them with `features.placeholders.enabled: false`.
-
-```
-%pixseleconomy_balance%                  -> 1,234.50        plain number, default currency
-%pixseleconomy_balance_formatted%        -> $1,234.50       with symbol and grouping
-%pixseleconomy_balance_short%            -> 1.23K           compact form
-%pixseleconomy_balance_formatted_gems%   -> 42 Gems         any currency
-%pixseleconomy_currency_name%            -> Coins
-%pixseleconomy_top_1_name%               -> zAukz           leaderboard snapshot
-%pixseleconomy_top_coins_2_balance%      -> $12,000.00
-```
-
-Balance placeholders read the in-memory cache, so they cost nothing per render. The full list,
-including affordability checks and leaderboard positions, is in
-[docs/PLACEHOLDERS.md](docs/PLACEHOLDERS.md).
-
-## API & Developer Integration
-
-Another plugin can use PixselEconomy without touching its database or internals:
-
-```java
-PixselEconomyAPI.addBalance(player, 250.0D, "coins")
-        .thenAccept(result -> {
-            if (result.isSuccessful()) {
-                plugin.getLogger().info("New balance: " + result.getNewBalance());
-            } else {
-                plugin.getLogger().warning("Failed: " + result.getStatus());
-            }
-        });
-
-double coins = PixselEconomyAPI.getService()
-        .getCachedBalance(player.getUniqueId(), "coins")
-        .orElse(0.0D);
-```
-
-- The API classes are bundled inside `PixselEconomy-1.0.0.jar`. Add that JAR from Releases to your
-  project as a compile-only library and never shade it. See
-  [docs/API.md](docs/API.md#adding-the-dependency) for the setup steps.
-- The plugin itself must be installed on the server. The API has no separate download.
-- Declare `softdepend: [PixselEconomy]` and check `PixselEconomyAPI.isAvailable()`.
-- Mutating calls return a `CompletableFuture<TransactionResult>`; reads that must not block
-  (`getCachedBalance`) are instant. Futures complete off the server thread.
-- `PixselBalanceChangeEvent` is cancellable and fires before every write;
-  `PixselCurrencyChangeEvent` reports currencies being created or deleted.
-
-Full documentation: [docs/API.md](docs/API.md). Ready-to-adapt examples:
-[docs/API-EXAMPLES.md](docs/API-EXAMPLES.md).
-
-## Dependencies
-
-| Dependency | Required | Notes |
+| Command | Description | Permission |
 |---|---|---|
-| Paper API 26.2+ | Yes | Provided by the server |
-| PlaceholderAPI 2.12.x | No | Only needed for `%pixseleconomy_...%` placeholders; the plugin loads fine without it |
-| SQLite JDBC | No | Bundled with Paper itself |
-| MySQL Connector/J 9.5.0 | No | Bundled in the plugin JAR, used only when `storage.type: mysql` |
+| `/pay <player> <amount> [currency]` | Transfer funds to another player | `pixsel.economy.pay` |
+| `/balance [player]` | Show your balance, or another player's | `pixsel.economy.balance` |
+| `/withdraw <amount> [currency]` | Withdraw funds as a banknote | `pixsel.economy.withdraw` |
+| `/leaderboard [currency] [page]` | View the richest accounts | `pixsel.economy.leaderboard` |
 
-No other Pixsel plugin is required, and no Pixsel plugin depends on this one.
+## Administration Commands
+Admin commands are all handled through one parent command for ease of use.
 
-## Source and Releases
+| Command | Description | Permission | Default |
+|---|---|---|---|
+| `/pixseleconomy` | Display available commands | `pixsel.economy.use` | Everyone |
+| `/pixseleconomy reload` | Reload configuration files | `pixsel.economy.reload` | Operators |
+| `/pixseleconomy addcurrency <player> <amount> [currency]` | Add funds to a player's account | `pixsel.economy.add` | Operators |
+| `/pixseleconomy takecurrency <player> <amount> [currency]` | Remove funds from a player's account | `pixsel.economy.take` | Operators |
+| `/pixseleconomy setcurrency <player> <amount> [currency]` | Set a player's balance | `pixsel.economy.set` | Operators |
+| `/pixseleconomy createcurrency <id> [display name]` | Create a new currency | `pixsel.economy.create` | Operators |
+| `/pixseleconomy deletecurrency <id>` | Delete an existing currency | `pixsel.economy.delete` | Operators |
+| `/pixseleconomy resetall [currency]` | Reset stored balances | `pixsel.economy.resetall` | Operators |
+| `/pixseleconomy resetall cancel` | Cancel a pending reset | `pixsel.economy.resetall` | Operators |
 
-This repository publishes the plugin source and documentation for reading, review and reference. The
-finished, ready-to-install JAR is distributed through [Releases](../../releases) and is
-self-contained: the API classes and the MySQL driver are bundled inside it and signature files are
-stripped, so nothing else is needed on the server. Every release is published by the author.
+The permissions `pixsel.economy.admin` and `pixsel.economy.*` grant access to all economy permissions.
 
-### Development verification
+## Banknotes
+Players can withdraw physical banknotes representing a specified amount of a particular currency.
+Banknotes can be redeemed by right-clicking them, and their currency and value are stored in item data.
 
-The `1.0.0` source targets the Paper 26.2 API on Java 25, and the storage layer was exercised
-against a real SQLite database (schema creation, upserts, transactional transfers, leaderboard
-paging, scoped and global resets, backup creation, backup deletion not affecting the live data,
-currency deletion and repeated initialisation). A live server smoke test on Paper 26.2/26.3 is still
-recommended after you deploy.
+Available settings include:
+- Configurable minimum and maximum withdrawal amounts.
+- Per-currency banknote settings.
+- Optional flat or percentage-based withdrawal fees.
+- Custom item names and lore.
+- Crafting restrictions, enabled by default.
 
-## Contributing
+Built-in safeguards:
+- If a player's inventory is full, the withdrawn banknote is dropped at their location. 
+- Banknotes belonging to a deleted currency can no longer be redeemed.
 
-Issues, bug reports and suggestions are welcome. Please keep the conventions used here: the Pixsel prefix and
-colour palette, `pixsel.economy.*` permission names, MiniMessage messages, prepared statements, and
-no blocking work on the server thread. Public API methods are treated as supported interfaces, so
-changes that break them require a major version bump.
+## Storage & Backups
+PixselEconomy supports SQLite, MySQL, and MariaDB.
 
-## License
+**SQLite** is enabled by default and requires no additional setup (Data is stored locally).
+**MySQL / MariaDB** can be configured for servers that prefer remote database storage or shared account data.
 
-MIT. See [LICENSE](LICENSE).
+Automatic backups are included, with configurable intervals, retention limits, and backup directories.
+**Changing the storage backend requires a server restart.**
+- See `config.yml` for the available database and backup settings.
+
+## PlaceholderAPI
+PixselEconomy includes an optional PlaceholderAPI expansion, allowing economy information to be displayed throughout your server.
+
+Supported placeholders include:
+- Player balances and formatted currency amounts.
+- Currency names and symbols.
+- Affordability checks.
+- Economy leaderboards.
+
+Balance placeholders read directly from memory to limit database queries, and leaderboard data is cached and refreshed every 60 seconds.
+
+See [`the placeholders documentation`](docs/PLACEHOLDERS.md) for the complete placeholder reference.
+
+## Developer API
+PixselEconomy also provides a public Java API for developers building integrations with other Paper plugins.
+
+The API provides access to currency information, player balances, transactions, and relevant economy events.
+
+It is included in the plugin JAR and can be added to another project's classpath as a compile-only dependency. No separate API download or shaded library is required.
+
+See the developer documentation:
+- [`API documentation`](docs/API.md)
+- [`API examples documentation`](docs/API-EXAMPLES.md)
+
+## Troubleshooting
+| Issue | Possible cause |
+|---|---|
+| Plugin does not load | Verify your server has a compatible Paper version and Java runtime. |
+| Placeholders are not resolving | Check that PlaceholderAPI is installed and enabled. |
+| Balances differ after a restart | Verify the configured storage backend. |
+| An account cannot be loaded | Check database connectivity and console output. |
+| A banknote can no longer be redeemed | Its associated currency may have been deleted. |
+| Configuration changes are not applied | Run `/pixseleconomy reload` and check the console for errors. |
+
+## Upgrading Plugin Version
+Configuration files are preserved during updates. Any required database migrations will be handled by the plugin and documented in future releases.
+
+## Support
+For bug reports, feature requests, and technical support, visit our [Issues page](../../issues).
+
+When reporting an issue, include your Paper version, Java version, relevant console output, and steps to reproduce the problem.
+
+---
+
+**Published by:** Pixsel Plugins  
+**Author:** zAukz  
+**License:** MIT
+
+## 💙 **Thank you for using PixselEconomy!** 💙
