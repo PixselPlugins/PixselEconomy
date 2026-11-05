@@ -1,0 +1,99 @@
+# PixselEconomy Configuration
+# Published by Pixsel Plugins
+# Authored by zAukz
+#
+# This file controls how the plugin behaves. Currency definitions live in currencies.yml
+# and every player-facing string lives in messages.yml.
+
+settings:
+  # Prints extra detail about storage, backups and placeholders to the console.
+  debug: false
+
+general:
+  # Currency used whenever a command or placeholder does not name one.
+  # Must exist in currencies.yml.
+  default-currency: coins
+
+  pay:
+    # Allows /pay between players.
+    enabled: true
+    # Smallest amount a player may send.
+    minimum-amount: 0.01
+    # Percentage of every payment that is removed as tax. 0 disables the tax.
+    tax-percentage: 0.0
+    # Allows players to pay themselves, which is only useful with a tax configured.
+    allow-self-payment: false
+
+features:
+  withdraw:
+    # Enables /withdraw, which turns a balance into a redeemable banknote item.
+    # When false the command refuses to run and the feature is inactive.
+    enabled: true
+    # Material of a banknote. Must be a valid Material name.
+    item: PAPER
+    # Default bounds for currencies that do not set their own withdraw.minimum and
+    # withdraw.maximum in currencies.yml.
+    minimum-amount: 1.0
+    maximum-amount: 100000.0
+    # Cancels banknotes placed inside a crafting grid so they cannot be consumed by a recipe.
+    protect-from-crafting: true
+
+  leaderboard:
+    # Enables /leaderboard, /topbal and /baltop.
+    enabled: true
+    # Entries shown on one page.
+    entries-per-page: 10
+
+  placeholders:
+    # Registers the %pixseleconomy_*% placeholders with PlaceholderAPI.
+    # PlaceholderAPI must be installed for this to do anything.
+    enabled: true
+    # How many leaderboard positions the top_* placeholders expose.
+    leaderboard-depth: 10
+    # How often the leaderboard snapshot used by placeholders refreshes, in seconds.
+    leaderboard-refresh-seconds: 60
+
+safety:
+  reset-all:
+    # How many times /resetall must be run in a row before it wipes balances.
+    required-confirmations: 5
+    # Seconds allowed between two confirmations. Taking longer restarts the count.
+    confirmation-window-seconds: 30
+    # true resets every balance to the currency's starting balance, false sets it to zero.
+    reset-to-starting-balance: false
+
+storage:
+  # sqlite (default, no setup required) or mysql (shared database server).
+  type: sqlite
+
+  sqlite:
+    # File inside plugins/PixselEconomy/.
+    file: database.db
+
+  mysql:
+    host: localhost
+    port: 3306
+    database: pixseleconomy
+    username: username
+    password: password
+    # Connections kept open by the built-in pool. 4-8 is enough for most servers.
+    pool-size: 4
+    # Extra URL parameters appended to the JDBC connection string.
+    properties: "useSSL=false&allowPublicKeyRetrieval=true"
+
+  backup:
+    # Writes a copy of the economy tables to a separate file on a timer.
+    # Backups are only ever written, never read, so deleting them cannot break the economy.
+    # SQLite backups are complete .db files; MySQL backups are portable .sql dumps.
+    enabled: true
+    # Minutes between backups.
+    interval-minutes: 60
+    # Folder inside plugins/PixselEconomy/ that receives the backups.
+    directory: backups
+    # How many backup files to keep. The oldest are removed. 0 keeps everything.
+    keep: 5
+
+integrations:
+  # Resolves PlaceholderAPI placeholders inside the plugin's own messages.
+  # Placeholder registration itself is controlled by features.placeholders.enabled.
+  placeholderapi: true
