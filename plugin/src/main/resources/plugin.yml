@@ -1,0 +1,94 @@
+name: PixselEconomy
+version: 1.0.0
+main: com.pixselplugins.zaukz.pixseleconomy.PixselEconomy
+api-version: '26.2'
+description: A lightweight multi-currency economy plugin with a full developer API.
+author: zAukz
+website: https://pixselplugins.com
+softdepend:
+  - PlaceholderAPI
+
+# Player commands are their own commands. Every administration command is a
+# /pixseleconomy subcommand (alias /eco) instead of a top-level command.
+commands:
+  pixseleconomy:
+    description: Main command for PixselEconomy, including all administration subcommands.
+    usage: /pixseleconomy help
+    aliases: [eco]
+  pay:
+    description: Send money to another player.
+    usage: /pay <player> <amount> [currency]
+  balance:
+    description: Show a balance.
+    usage: /balance [player] [currency]
+    aliases: [bal]
+  withdraw:
+    description: Turn a balance into a redeemable banknote.
+    usage: /withdraw <amount> [currency]
+  leaderboard:
+    description: Show the richest accounts for a currency.
+    usage: /leaderboard [currency] [page]
+    aliases: [topbal, baltop]
+
+permissions:
+  pixsel.economy.*:
+    description: Grants every PixselEconomy permission.
+    default: op
+    children:
+      pixsel.economy.admin: true
+  pixsel.economy.admin:
+    description: Grants every PixselEconomy permission, including administration.
+    default: op
+    children:
+      pixsel.economy.use: true
+      pixsel.economy.pay: true
+      pixsel.economy.balance: true
+      pixsel.economy.balance.others: true
+      pixsel.economy.withdraw: true
+      pixsel.economy.leaderboard: true
+      pixsel.economy.add: true
+      pixsel.economy.take: true
+      pixsel.economy.set: true
+      pixsel.economy.create: true
+      pixsel.economy.delete: true
+      pixsel.economy.resetall: true
+      pixsel.economy.reload: true
+  pixsel.economy.use:
+    description: Allows using /pixseleconomy help.
+    default: true
+  pixsel.economy.pay:
+    description: Allows sending money with /pay.
+    default: true
+  pixsel.economy.balance:
+    description: Allows checking your own balance.
+    default: true
+  pixsel.economy.balance.others:
+    description: Allows checking the balance of other players.
+    default: op
+  pixsel.economy.withdraw:
+    description: Allows turning a balance into a banknote.
+    default: true
+  pixsel.economy.leaderboard:
+    description: Allows viewing the balance leaderboard.
+    default: true
+  pixsel.economy.add:
+    description: Allows adding money with /pixseleconomy addcurrency.
+    default: op
+  pixsel.economy.take:
+    description: Allows removing money with /pixseleconomy takecurrency.
+    default: op
+  pixsel.economy.set:
+    description: Allows setting a balance with /pixseleconomy setcurrency.
+    default: op
+  pixsel.economy.create:
+    description: Allows creating currencies with /pixseleconomy createcurrency.
+    default: op
+  pixsel.economy.delete:
+    description: Allows deleting currencies with /pixseleconomy deletecurrency.
+    default: op
+  pixsel.economy.resetall:
+    description: Allows resetting balances with /pixseleconomy resetall.
+    default: op
+  pixsel.economy.reload:
+    description: Allows reloading the configuration.
+    default: op
