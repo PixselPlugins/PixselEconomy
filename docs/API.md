@@ -260,3 +260,11 @@ Check the API version before calling newer methods to ensure compatibility with 
 
 - [`API examples documentation`](API-EXAMPLES.md): Complete examples that can be adapted for your own plugins.
 - [`Placeholders documentation`](PLACEHOLDERS.md): Placeholder reference for integrations that do not require Java development.
+
+---
+
+**Published by:** Pixsel Plugins  
+**Author:** zAukz  
+**API Version:** `1.0.0`
+
+## 💙 **Thank you for integrating with PixselEconomy!** 💙
