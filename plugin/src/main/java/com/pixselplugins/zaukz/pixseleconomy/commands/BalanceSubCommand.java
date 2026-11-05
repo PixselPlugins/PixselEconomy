@@ -12,6 +12,7 @@ import com.pixselplugins.zaukz.pixseleconomy.PixselEconomy;
 import com.pixselplugins.zaukz.pixseleconomy.api.Currency;
 import com.pixselplugins.zaukz.pixseleconomy.utils.Targets;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import org.bukkit.OfflinePlayer;
@@ -20,11 +21,12 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * {@code /balance [player] [currency]}: shows a balance.
+ * {@code /balance [player]}: shows a balance in the default currency.
  *
- * <p>The player argument is optional: without it the sender's own balance is shown. A single
- * argument is resolved as a player first and as a currency second, so {@code /bal gems} and
- * {@code /bal Notch} both work.</p>
+ * <p>The player argument is optional: without it the sender's own balance is shown. There is no
+ * currency argument, so the first argument is always read as a player name and can never be
+ * mistaken for a currency. Looking up somebody else needs {@code pixsel.economy.balance.others},
+ * which is granted to everyone by default and can be denied to hide other players' balances.</p>
  */
 public final class BalanceSubCommand implements SubCommand {
 
@@ -46,12 +48,12 @@ public final class BalanceSubCommand implements SubCommand {
 
     @Override
     public @NotNull String usage() {
-        return "balance [player] [currency]";
+        return "balance [player]";
     }
 
     @Override
     public @NotNull String description() {
-        return "Show a balance.";
+        return "Show your balance, or another player's.";
     }
 
     @Override
@@ -61,39 +63,24 @@ public final class BalanceSubCommand implements SubCommand {
 
     @Override
     public void execute(@NotNull CommandSender sender, @NotNull String[] args) {
-        OfflinePlayer target = null;
-        Currency currency = null;
+        if (args.length > 1) {
+            plugin.messages().send(sender, "general.invalid-usage", Map.of("usage", "/balance [player]"));
+            return;
+        }
 
-        if (args.length >= 1) {
-            // A player name wins over a currency id, so /bal <player> keeps working even when a
-            // currency happens to share the name. A name that is no player is read as a currency.
-            target = Targets.find(args[0]);
-            if (target == null) {
-                currency = plugin.currencies().get(args[0]);
-            }
-            if (target == null && currency == null) {
-                plugin.messages().send(sender, "general.unknown-player-or-currency",
-                        Map.of("input", args[0]));
+        OfflinePlayer target;
+        if (args.length == 1) {
+            OfflinePlayer found = Targets.find(args[0]);
+            if (found == null) {
+                plugin.messages().send(sender, "general.unknown-player", Map.of("player", args[0]));
                 return;
             }
-        }
-        if (args.length >= 2) {
-            Currency named = plugin.currencies().get(args[1]);
-            if (named == null) {
-                plugin.messages().send(sender, "general.unknown-currency", Map.of("currency", args[1]));
-                return;
-            }
-            currency = named;
-        }
-        if (currency == null) {
-            currency = plugin.currencies().getDefault();
-        }
-        if (target == null) {
-            if (!(sender instanceof Player player)) {
-                plugin.messages().send(sender, "general.player-required");
-                return;
-            }
+            target = found;
+        } else if (sender instanceof Player player) {
             target = player;
+        } else {
+            plugin.messages().send(sender, "general.player-required");
+            return;
         }
 
         UUID targetId = target.getUniqueId();
@@ -103,17 +90,17 @@ public final class BalanceSubCommand implements SubCommand {
             return;
         }
 
-        Currency requested = currency;
+        Currency currency = plugin.currencies().getDefault();
         OfflinePlayer viewed = target;
-        plugin.economy().getBalance(targetId, requested.getId()).thenAccept(balance ->
+        plugin.economy().getBalance(targetId, currency.getId()).thenAccept(balance ->
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     Map<String, String> placeholders = Map.of(
                             "player", Targets.name(viewed),
-                            "balance", requested.format(balance),
-                            "currency", requested.getDisplayName(),
-                            "currency_id", requested.getId(),
-                            "symbol", requested.getSymbol(),
-                            "amount", requested.formatNumber(balance, requested.getDecimals()));
+                            "balance", currency.format(balance),
+                            "currency", currency.getDisplayName(),
+                            "currency_id", currency.getId(),
+                            "symbol", currency.getSymbol(),
+                            "amount", currency.formatNumber(balance, currency.getDecimals()));
                     plugin.messages().send(sender, self ? "balance.self" : "balance.other", placeholders);
                 }));
     }
@@ -121,15 +108,10 @@ public final class BalanceSubCommand implements SubCommand {
     @Override
     public @NotNull List<String> complete(@NotNull CommandSender sender, @NotNull String[] args) {
         if (args.length == 1) {
-            return java.util.stream.Stream.concat(
-                            plugin.currencies().ids().stream(),
-                            plugin.getServer().getOnlinePlayers().stream().map(Player::getName))
-                    .filter(value -> value.toLowerCase().startsWith(args[0].toLowerCase()))
-                    .toList();
-        }
-        if (args.length == 2) {
-            return plugin.currencies().ids().stream()
-                    .filter(id -> id.startsWith(args[1].toLowerCase()))
+            String typed = args[0].toLowerCase(Locale.ROOT);
+            return plugin.getServer().getOnlinePlayers().stream()
+                    .map(Player::getName)
+                    .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(typed))
                     .toList();
         }
         return List.of();
