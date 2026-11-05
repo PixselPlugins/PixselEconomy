@@ -1,0 +1,46 @@
+# Build output
+target/
+build/
+.gradle/
+*.class
+
+# Packaged artifacts (keep review copies local, never commit them)
+*.jar
+!**/wrapper/*.jar
+
+# IDE / editor
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+
+# Operating system metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local runtime and test data
+run/
+logs/
+server/
+*.log
+*.db
+*.db-shm
+*.db-wal
+backups/
+
+# Local secrets / environment overrides
+.env
+.env.local
+
+# Build configuration is kept local on purpose.
+# The repository publishes the plugin source and documentation; the compiled
+# plugin is distributed through Releases. Delete these three lines to publish
+# the build files again.
+/pom.xml
+/api/pom.xml
+/plugin/pom.xml
